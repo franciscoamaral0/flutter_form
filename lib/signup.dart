@@ -27,6 +27,9 @@ class _SignUpState extends State<SignUp> {
   final phoneFocusNode = FocusNode();
   final termsFocusNode = FocusNode(descendantsAreFocusable: false);
 
+  final emailRegex = RegExp(
+      r"[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?");
+
   @override
   void initState() {
     super.initState();
@@ -113,13 +116,23 @@ class _SignUpState extends State<SignUp> {
                 validator: emptyValidator,
               ),
               const SizedBox(height: 10),
-              TextField(
+              TextFormField(
                 decoration: buildInputDecoration(Strings.email),
                 textInputAction: TextInputAction.next,
                 keyboardType: TextInputType.emailAddress,
+                autovalidateMode: AutovalidateMode.onUserInteraction,
+                validator: (email) {
+                  final emptyError = emptyValidator(email);
+                  if (emptyError == null && email != null) {
+                    if (!emailRegex.hasMatch(email)) {
+                      return Strings.errorMessageInvalidEmail;
+                    }
+                  }
+                  return null;
+                },
               ),
               const SizedBox(height: 10),
-              TextField(
+              TextFormField(
                 obscureText: obscureText,
                 decoration: buildInputDecoration(Strings.password).copyWith(
                   suffixIcon: ExcludeFocus(
@@ -216,6 +229,7 @@ class _SignUpState extends State<SignUp> {
     if (text == null || text.isEmpty) {
       return Strings.errorMessageEmptyField;
     }
+    return null;
   }
 
   @override
