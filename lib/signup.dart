@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:project_textfield/components/contact_tile.dart';
 import 'package:project_textfield/resources/strings.dart';
 
@@ -121,35 +122,33 @@ class _SignUpState extends State<SignUp> {
                 textInputAction: TextInputAction.next,
                 keyboardType: TextInputType.emailAddress,
                 autovalidateMode: AutovalidateMode.onUserInteraction,
-                validator: (email) {
-                  final emptyError = emptyValidator(email);
-                  if (emptyError == null && email != null) {
-                    if (!emailRegex.hasMatch(email)) {
-                      return Strings.errorMessageInvalidEmail;
-                    }
-                  }
-                  return null;
-                },
+                validator: emailValidator,
               ),
               const SizedBox(height: 10),
               TextFormField(
-                obscureText: obscureText,
-                decoration: buildInputDecoration(Strings.password).copyWith(
-                  suffixIcon: ExcludeFocus(
-                    child: IconButton(
+                  validator: passwordValidator,
+                  inputFormatters: [LengthLimitingTextInputFormatter(16)],
+                  obscureText: obscureText,
+                  decoration: buildInputDecoration(Strings.password).copyWith(
+                    helperText: Strings.passwordHelper,
+                    suffixIcon: ExcludeFocus(
+                      child: IconButton(
                         onPressed: togleObscureIcon,
                         icon: Icon(obscureText
                             ? Icons.visibility
-                            : Icons.visibility_off)),
+                            : Icons.visibility_off),
+                      ),
+                    ),
                   ),
-                ),
-                textInputAction: TextInputAction.next,
-              ),
+                  textInputAction: TextInputAction.next,
+                  autovalidateMode: AutovalidateMode.onUserInteraction),
               const SizedBox(height: 18),
               buildHeader(Strings.personalInformation),
-              TextField(
+              TextFormField(
                 decoration: buildInputDecoration(Strings.fullName),
                 textInputAction: TextInputAction.next,
+                autovalidateMode: AutovalidateMode.onUserInteraction,
+                validator: fullNameValidator,
               ),
               const SizedBox(height: 10),
               Row(
@@ -223,6 +222,36 @@ class _SignUpState extends State<SignUp> {
         ),
       ),
     );
+  }
+
+  String? fullNameValidator(fullName) {
+    final emptyError = emptyValidator(fullName);
+    if (emptyError == null && fullName != null) {
+      if (fullName.split(' ').length < 2) {
+        return Strings.errorMessageInvalidFullName;
+      }
+    }
+    return emptyError;
+  }
+
+  String? passwordValidator(password) {
+    final emptyError = emptyValidator(password);
+    if (emptyError == null && password != null) {
+      if (password.length < 8) {
+        return Strings.passwordHelper;
+      }
+    }
+    return emptyError;
+  }
+
+  String? emailValidator(email) {
+    final emptyError = emptyValidator(email);
+    if (emptyError == null && email != null) {
+      if (!emailRegex.hasMatch(email)) {
+        return Strings.errorMessageInvalidEmail;
+      }
+    }
+    return emptyError;
   }
 
   String? emptyValidator(String? text) {
