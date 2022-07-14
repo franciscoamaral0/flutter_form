@@ -28,6 +28,7 @@ class _SignUpState extends State<SignUp> {
   final birthDateFocusNode = FocusNode();
   final phoneFocusNode = FocusNode();
   final termsFocusNode = FocusNode(descendantsAreFocusable: false);
+  final userNameFocusNode = FocusNode();
 
   final emailRegex = RegExp(
       r"[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?");
@@ -48,8 +49,8 @@ class _SignUpState extends State<SignUp> {
     });
   }
 
-  void showSignUpDialog() {
-    showDialog(
+  void showSignUpDialog(BuildContext context) {
+    showDialog<bool>(
         context: context,
         builder: (context) {
           return AlertDialog(
@@ -57,14 +58,28 @@ class _SignUpState extends State<SignUp> {
             content: const Text(Strings.confirmationMessage),
             actions: [
               TextButton(
-                  onPressed: Navigator.of(context).pop,
+                  onPressed: () => Navigator.of(context).pop(false),
                   child: const Text("Não")),
               TextButton(
-                  onPressed: Navigator.of(context).pop,
+                  onPressed: () => Navigator.of(context).pop(true),
                   child: const Text("Sim"))
             ],
           );
-        });
+        }).then((confirmedSignUp) {
+      if (confirmedSignUp != null && confirmedSignUp) {
+        emailChecked = true;
+        phoneCheked = true;
+        acceptedTerms = false;
+
+        Form.of(context)?.reset();
+        birthDateController.clear();
+
+        userNameFocusNode.requestFocus();
+
+        ScaffoldMessenger.of(context)
+            .showSnackBar(const SnackBar(content: Text(Strings.userSignedUp)));
+      }
+    });
   }
 
   void showBirthDatePicker() {
@@ -114,6 +129,7 @@ class _SignUpState extends State<SignUp> {
             children: [
               buildHeader(Strings.accessData),
               TextFormField(
+                focusNode: userNameFocusNode,
                 autofocus: true,
                 decoration: buildInputDecoration(Strings.userName),
                 textInputAction: TextInputAction.next,
@@ -176,6 +192,7 @@ class _SignUpState extends State<SignUp> {
                         keyboardType: TextInputType.number,
                         onTap: showBirthDatePicker,
                         validator: emptyValidator,
+                        autovalidateMode: AutovalidateMode.onUserInteraction,
                       ),
                     ),
                   ),
@@ -247,10 +264,17 @@ class _SignUpState extends State<SignUp> {
                           }));
                 },
               ),
-              ElevatedButton(
-                onPressed: showSignUpDialog,
-                child: const Text(Strings.signUp),
-              )
+              Builder(builder: (context) {
+                return ElevatedButton(
+                  onPressed: () {
+                    final formState = Form.of(context);
+                    if (formState != null && formState.validate()) {
+                      showSignUpDialog(context);
+                    }
+                  },
+                  child: const Text(Strings.signUp),
+                );
+              })
             ],
           ),
         ),
@@ -301,6 +325,7 @@ class _SignUpState extends State<SignUp> {
     birthDateFocusNode.dispose();
     phoneFocusNode.dispose();
     termsFocusNode.dispose();
+    userNameFocusNode.dispose();
     super.dispose();
   }
 
