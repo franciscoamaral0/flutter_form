@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'package:project_textfield/components/contact_tile.dart';
 import 'package:project_textfield/resources/strings.dart';
 
@@ -30,6 +31,9 @@ class _SignUpState extends State<SignUp> {
 
   final emailRegex = RegExp(
       r"[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?");
+
+  final phoneMask = MaskTextInputFormatter(
+      mask: '(##) #####-####', filter: {'#': RegExp(r'[0-9]')});
 
   @override
   void initState() {
@@ -164,24 +168,37 @@ class _SignUpState extends State<SignUp> {
                           showBirthDatePicker();
                         }
                       },
-                      child: TextField(
+                      child: TextFormField(
                         controller: birthDateController,
                         readOnly: true,
                         decoration: buildInputDecoration(Strings.birthDate),
                         textInputAction: TextInputAction.next,
                         keyboardType: TextInputType.number,
                         onTap: showBirthDatePicker,
+                        validator: emptyValidator,
                       ),
                     ),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
                     flex: 5,
-                    child: TextField(
+                    child: TextFormField(
                       focusNode: phoneFocusNode,
                       decoration: buildInputDecoration(Strings.phone),
                       textInputAction: TextInputAction.next,
                       keyboardType: TextInputType.phone,
+                      inputFormatters: [phoneMask],
+                      autovalidateMode: AutovalidateMode.onUserInteraction,
+                      validator: (phone) {
+                        final emptyPhone = emptyValidator(phone);
+                        if (emptyPhone == null && phone != null) {
+                          final phoneDigits = phoneMask.unmaskText(phone);
+                          if (phoneDigits.length < 11) {
+                            return Strings.errorMessageInvalidPhone;
+                          }
+                        }
+                        return emptyPhone;
+                      },
                     ),
                   ),
                 ],
@@ -202,17 +219,34 @@ class _SignUpState extends State<SignUp> {
                       }),
                   contactIcon: Icons.phone,
                   contactTile: Strings.phone),
-              SwitchListTile(
-                  focusNode: termsFocusNode,
-                  contentPadding: const EdgeInsets.only(right: 8.0),
-                  title: Text(
-                    Strings.termsMessage,
-                    style: theme.textTheme.subtitle2,
-                  ),
-                  value: acceptedTerms,
-                  onChanged: (value) => setState(() {
-                        acceptedTerms = value;
-                      })),
+              FormField(
+                validator: (_) {
+                  if (!acceptedTerms) {
+                    return Strings.errorMessageNotAcceptedTerms;
+                  }
+                },
+                builder: (formFieldState) {
+                  final errorText = formFieldState.errorText;
+                  return SwitchListTile(
+                      focusNode: termsFocusNode,
+                      contentPadding: const EdgeInsets.only(right: 8.0),
+                      title: Text(
+                        Strings.termsMessage,
+                        style: theme.textTheme.subtitle2,
+                      ),
+                      subtitle: errorText != null
+                          ? Text(
+                              errorText,
+                              style: theme.textTheme.bodyText2
+                                  ?.copyWith(color: theme.errorColor),
+                            )
+                          : null,
+                      value: acceptedTerms,
+                      onChanged: (value) => setState(() {
+                            acceptedTerms = value;
+                          }));
+                },
+              ),
               ElevatedButton(
                 onPressed: showSignUpDialog,
                 child: const Text(Strings.signUp),

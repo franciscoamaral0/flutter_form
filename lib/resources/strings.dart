@@ -5,7 +5,7 @@ class Strings {
   static const password = 'Senha';
   static const fullName = 'Nome Completo';
   static const birthDate = 'Data de Nascimento';
-  static const phone = 'Telefone';
+  static const phone = 'Telefone Movel';
   static const signUp = 'Cadastrar!';
   static const confirmationMessage = 'Deseja efetuar cadastro?';
   static const accessData = 'Dados de Acesso';
